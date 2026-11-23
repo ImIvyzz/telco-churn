@@ -53,4 +53,4 @@ jupyter notebook churn_prediction_v2.ipynb
 This started as my capstone project for the Data Analytics program at Toronto School of Management (2024). This v2 (2026) fixes the original's modeling errors (a broken label-encoding model, scaler leakage, accuracy-only evaluation), adds statistical testing and a business-impact layer, and documents every change in the last section of the notebook.
 
 **Data:** IBM Telco Customer Churn sample dataset (public, 7,043 customers).
-**Author:** Ivan Ignacio Velazquez · Data Analyst · [GitHub](https://github.com/ImIvyzz) · [LinkedIn](https://www.linkedin.com/in/TU-LINKEDIN) · [Portfolio](https://imivyzz.github.io)
+**Author:** Ivan Ignacio Velazquez · Data Analyst · [GitHub](https://github.com/ImIvyzz) · [LinkedIn](https://www.linkedin.com/in/ivan-ignacio-velazquez-b436362b6/) · [Portfolio](https://imivyzz.github.io)
