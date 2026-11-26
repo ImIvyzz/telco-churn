@@ -126,13 +126,14 @@ def importance(pipe: Pipeline, s: Split, top: int = 10) -> pd.DataFrame:
 def plot_evaluation(pipes: dict[str, Pipeline], best_name: str, s: Split, path: Path) -> None:
     """ROC curves for both models and the confusion matrix of the selected one."""
     fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
-    for name in (LOGIT, FOREST):
-        RocCurveDisplay.from_estimator(pipes[name], s.X_test, s.y_test, ax=axes[0], name=name)
-    axes[0].plot([0, 1], [0, 1], "--", c="grey", label="Random guess")
+    for name, color in ((LOGIT, config.BLUE), (FOREST, config.ORANGE)):
+        RocCurveDisplay.from_estimator(pipes[name], s.X_test, s.y_test, ax=axes[0], name=name,
+                                       curve_kwargs={"color": color, "lw": 2})
+    axes[0].plot([0, 1], [0, 1], "--", c=config.GREY, label="Random guess")
     axes[0].set_title("ROC curve (test set)")
     axes[0].legend(loc="lower right")
     ConfusionMatrixDisplay.from_estimator(pipes[best_name], s.X_test, s.y_test,
-                                          display_labels=["Stays", "Churns"], cmap="Greens",
+                                          display_labels=["Stays", "Churns"], cmap="Blues",
                                           colorbar=False, ax=axes[1])
     axes[1].set_title(f"Confusion matrix: {best_name} (threshold 0.5)")
     axes[1].grid(False)
@@ -141,11 +142,37 @@ def plot_evaluation(pipes: dict[str, Pipeline], best_name: str, s: Split, path: 
     plt.close(fig)
 
 
+# Column names as a person would say them, for chart labels
+READABLE = {
+    "InternetService": "Internet service", "PaymentMethod": "Payment method",
+    "PaperlessBilling": "Paperless billing", "OnlineSecurity": "Online security",
+    "OnlineBackup": "Online backup", "DeviceProtection": "Device protection",
+    "TechSupport": "Tech support", "StreamingTV": "Streaming TV",
+    "StreamingMovies": "Streaming movies", "MultipleLines": "Multiple lines",
+    "PhoneService": "Phone service", "SeniorCitizen": "Senior citizen",
+    "tenure": "Tenure, +1 SD (about 2 years)",
+}
+
+
+def _readable(feature: str) -> str:
+    """'InternetService_Fiber optic' -> 'Internet service: Fiber optic'."""
+    col, _, level = feature.partition("_")
+    name = READABLE.get(col, col)
+    return f"{name}: {level}" if level else name
+
+
 def plot_drivers(odds: pd.Series, path: Path) -> None:
-    """The six strongest protective and seven strongest risk factors."""
-    top = pd.concat([odds.head(6), odds.tail(7)])
+    """The strongest protective and risk factors, as odds ratios.
+
+    MonthlyCharges and TotalCharges are left out of the chart: TotalCharges is
+    roughly tenure x MonthlyCharges, so their coefficients pull against each other
+    and their signs can't be read on their own. They stay in the model.
+    """
+    odds = odds.drop(["MonthlyCharges", "TotalCharges"], errors="ignore")
+    top = pd.concat([odds.head(5), odds.tail(6)])
+    labels = [_readable(n) for n in top.index]
     fig, ax = plt.subplots(figsize=(9, 6))
-    ax.barh(top.index, top.values, color=[config.ACCENT if v > 1 else "#9ca3af" for v in top.values])
+    ax.barh(labels, top.values, color=[config.ORANGE if v > 1 else config.BLUE for v in top.values])
     ax.axvline(1, c="black", lw=1)
     ax.set_xscale("log")
     ticks = [0.25, 0.5, 1, 1.5, 2]

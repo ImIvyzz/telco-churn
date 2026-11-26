@@ -8,7 +8,15 @@ from scipy.stats import chi2_contingency
 
 from churn import config
 
-SEGMENTS = ["Contract", "tenure_group", "InternetService", "PaymentMethod", "TechSupport", "SeniorCitizen"]
+# Segments shown in the overview chart, with readable titles instead of column names
+SEGMENTS = {
+    "Contract": "Contract type",
+    "tenure_group": "Months as a customer",
+    "InternetService": "Internet service",
+    "PaymentMethod": "Payment method",
+    "TechSupport": "Tech support",
+    "SeniorCitizen": "Senior citizen",
+}
 
 
 def churn_by(df: pd.DataFrame, col: str) -> pd.DataFrame:
@@ -57,20 +65,29 @@ def chi_square_tests(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def plot_segments(df: pd.DataFrame, path: Path) -> None:
-    """Six bar charts of churn rate by segment, with the overall rate as a dashed line."""
+    """Six bar charts of churn rate by segment, with the overall rate as a dashed line.
+
+    Bars above the overall rate are orange, the rest blue, so the high-risk
+    segments stand out even when the chart is shrunk inside a README.
+    """
     overall = df[config.TARGET].mean()
-    fig, axes = plt.subplots(2, 3, figsize=(17, 8.5))
-    for ax, col in zip(axes.flat, SEGMENTS):
+    fig, axes = plt.subplots(2, 3, figsize=(16, 8.5))
+    for ax, (col, title) in zip(axes.flat, SEGMENTS.items()):
         t = churn_by(df, col)
-        t[col] = t[col].astype(str)
-        sns.barplot(data=t, x="churn_rate", y=col, ax=ax, color=config.ACCENT, order=list(t[col]))
-        ax.axvline(overall, ls="--", c="grey", lw=1)
-        ax.set(xlabel="Churn rate", ylabel="", title=col, xlim=(0, 0.62))
+        labels = t[col].astype(str).str.replace(" (automatic)", "", regex=False)
+        colors = [config.ORANGE if r > overall else config.BLUE for r in t["churn_rate"]]
+        ax.barh(labels, t["churn_rate"], color=colors, height=0.65)
+        ax.invert_yaxis()  # keep the dataset's category order top to bottom
+        ax.axvline(overall, ls="--", c="#4B5563", lw=1.2)
+        ax.set_title(title, fontsize=16, loc="left", pad=10)
+        ax.set_xlim(0, 0.62)
         ax.xaxis.set_major_formatter(lambda v, _: f"{v:.0%}")
-        for patch, rate in zip(ax.patches, t["churn_rate"]):
-            ax.text(patch.get_width() + 0.006, patch.get_y() + patch.get_height() / 2,
-                    f"{rate:.1%}", va="center", fontsize=9)
-    fig.suptitle("Churn rate by customer segment", fontsize=15)
+        ax.tick_params(labelsize=13)
+        ax.grid(axis="y", visible=False)
+        for y, rate in enumerate(t["churn_rate"]):
+            ax.text(rate + 0.008, y, f"{rate:.1%}", va="center", fontsize=13)
+    fig.suptitle(f"Churn rate by customer segment (dashed line: overall rate, {overall:.1%})",
+                 fontsize=18, x=0.01, ha="left")
     fig.tight_layout()
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)

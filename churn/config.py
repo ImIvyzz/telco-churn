@@ -26,4 +26,8 @@ RISK_LABELS = ["Low", "Medium", "High"]
 SAVE_RATE = 0.20          # share of contacted churners a retention offer keeps
 TARGET_BAND = "High"
 
-ACCENT = "#0f766e"        # chart colour
+# Chart colours: orange = churn / higher risk, blue = retained / lower risk.
+# Blue and orange stay distinguishable for colour-blind readers, unlike red/green.
+ORANGE = "#E4572E"
+BLUE = "#5880C0"
+GREY = "#9CA3AF"
