@@ -33,8 +33,16 @@ Predicting which telecom customers will cancel, explaining why, and estimating h
 
 ## Repository
 ```
-├── churn_prediction_v2.ipynb      # full analysis (run top to bottom)
+├── churn_prediction_v2.ipynb      # the analysis as a narrative, with every chart and table
 ├── churn_prediction_v2.html       # same notebook, viewable without Python
+├── run_analysis.py                # runs the whole pipeline and regenerates outputs/
+├── churn/                         # the same logic as reusable, tested Python modules
+│   ├── config.py                  # paths, constants and scenario assumptions
+│   ├── data.py                    # loading and cleaning
+│   ├── analysis.py                # segment churn rates and chi-square tests
+│   ├── model.py                   # pipelines, evaluation, model selection, drivers
+│   └── impact.py                  # risk scores, risk bands, retention scenario
+├── tests/test_churn.py            # 10 checks, incl. no data leakage and baseline comparison
 ├── data/WA_Fn-UseC_-Telco-Customer-Churn.csv
 ├── outputs/
 │   ├── customer_risk_scores.csv   # risk score per customer (Power BI input)
@@ -46,8 +54,14 @@ Predicting which telecom customers will cancel, explaining why, and estimating h
 ## Run it
 ```bash
 pip install -r requirements.txt
-jupyter notebook churn_prediction_v2.ipynb
+
+python run_analysis.py                    # full pipeline, about 30 seconds
+python run_analysis.py --save-rate 0.3    # test a different retention assumption
+pytest                                    # run the checks
+
+jupyter notebook churn_prediction_v2.ipynb   # or read the analysis step by step
 ```
+The script and the notebook produce identical results.
 
 ## Background
 This started as my capstone project for the Data Analytics program at Toronto School of Management (2024). This v2 (2026) fixes the original's modeling errors (a broken label-encoding model, scaler leakage, accuracy-only evaluation), adds statistical testing and a business-impact layer, and documents every change in the last section of the notebook.
